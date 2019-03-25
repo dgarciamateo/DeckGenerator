@@ -47,6 +47,16 @@ public class MainFrame extends JFrame {
 	private String name = "Deck";
 	private boolean hasFail = false;
 
+	private DefaultListModel<Card> model;
+	private DefaultListModel<Card> model2;
+	private JList<Card> Deck_list;
+	private JList<Card> Col_list;
+
+	final JButton b_random = new JButton("RANDOM");
+
+	final IDeckGenerator gestorExist = new ExistDAOImpl();
+	final IDeckGenerator gestorMongo = new MongoDAOImpl();
+
 	// Arrays que almacenan las cartas de ambas listas, tanto de la Collection como
 	// de Deck
 	private ArrayList<Card> collectionCards = new ArrayList<Card>();
@@ -74,9 +84,6 @@ public class MainFrame extends JFrame {
 	 */
 	public MainFrame() {
 
-		final IDeckGenerator gestorExist = new ExistDAOImpl();
-		final IDeckGenerator gestorMongo = new MongoDAOImpl();
-
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 540, 349);
 
@@ -94,9 +101,9 @@ public class MainFrame extends JFrame {
 
 		// Estilo del JList
 
-		final DefaultListModel<String> model = new DefaultListModel<String>();
+		model = new DefaultListModel<Card>();
 
-		final JList<String> Col_list = new JList<String>(model);
+		Col_list = new JList<Card>(model);
 		Col_list.setCellRenderer(new TransparentListCellRenderer());
 		Col_list.setOpaque(false);
 		Col_list.setSelectionBackground(new Color(109, 14, 118));
@@ -105,9 +112,9 @@ public class MainFrame extends JFrame {
 		scrollPane.setOpaque(false);
 		scrollPane.getViewport().setOpaque(false);
 
-		final DefaultListModel<String> model2 = new DefaultListModel<String>();
+		model2 = new DefaultListModel<Card>();
 
-		final JList<String> Deck_list = new JList<String>(model2);
+		Deck_list = new JList<Card>(model2);
 		Deck_list.setCellRenderer(new TransparentListCellRenderer());
 		Deck_list.setOpaque(false);
 		Deck_list.setSelectionBackground(new Color(109, 14, 118));
@@ -133,40 +140,37 @@ public class MainFrame extends JFrame {
 
 		b_add.addActionListener(new ActionListener() {
 
-			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO Auto-generated method stub
 				// Cogemos los elementos seleccionados y los metemos en la lista de Strings
 				// selected
 
-				List<String> selected = Col_list.getSelectedValuesList();
+				List<Card> selected = Col_list.getSelectedValuesList();
 				hasFail = false;
 
 				for (int i = 0; i < selected.size(); i++) {
 					// Coger el value de la carta y sumarlo al total
-					String selec = selected.get(i);
-					String[] info = selec.split(" - ");
+					Card cardSelec = selected.get(i);
 
 					if (value <= 20) {
-						vAux = Integer.parseInt(info[info.length - 1]);
+						vAux = cardSelec.getValue();
 
 						// Comprobamos que la suma del valor total y el ultimo vaor que vaya a ser
 						// insertado no superan 20
 						if (value + vAux <= 20) {
 							// Metemos la seleccion en la lista deck y la quitamos de la lista collection
-							model2.addElement(selected.get(i));
-							model.removeElement(selected.get(i));
+							model2.addElement(cardSelec);
+							model.removeElement(cardSelec);
 
 							value = value + vAux;
 							lblBaraja.setText(name + " - Total Value: " + value);
 							// Metemos la carta seleccionada en el arraylist de cartas de la baraja nueva
-							deckCards.add(new Card(0, info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]),
-									Integer.parseInt(info[3]), Integer.parseInt(info[4])));
+							deckCards.add(cardSelec);
 
 							// Bucle que busca la carta que se ha seleccionado para añadir y se borra del
 							// arraylist de cartas de la collection
 							for (int j = 0; j < collectionCards.size(); j++) {
-								if (collectionCards.get(j).getName().equals(info[0])) {
+								if (collectionCards.get(j).getName().equals(cardSelec.getName())) {
 									collectionCards.remove(j);
 								}
 							}
@@ -206,18 +210,16 @@ public class MainFrame extends JFrame {
 
 		b_quit.addActionListener(new ActionListener() {
 
-			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO Auto-generated method stub
 
-				List<String> selected = Deck_list.getSelectedValuesList();
+				List<Card> selected = Deck_list.getSelectedValuesList();
 
 				for (int i = 0; i < selected.size(); i++) {
 
-					String selec = selected.get(i);
-					String[] info = selec.split(" - ");
+					Card cardSelec = selected.get(i);
 
-					value = value - Integer.parseInt(info[info.length - 1]);
+					value = value - cardSelec.getValue();
 
 					lblBaraja.setText(name + " - Total Value: " + value);
 					model.addElement(selected.get(i));
@@ -225,13 +227,12 @@ public class MainFrame extends JFrame {
 
 					// Metemos la carta seleccionada de vuelta en el arraylist de cartas de la
 					// collection
-					collectionCards.add(new Card(0, info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]),
-							Integer.parseInt(info[3]), Integer.parseInt(info[4])));
+					collectionCards.add(cardSelec);
 
 					// Bucle que busca la carta que se ha seleccionado se borra del arraylist de
 					// cartas de la baraja
 					for (int j = 0; j < deckCards.size(); j++) {
-						if (deckCards.get(j).getName().equals(info[0])) {
+						if (deckCards.get(j).getName().equals(cardSelec.getName())) {
 							deckCards.remove(j);
 						}
 					}
@@ -250,14 +251,12 @@ public class MainFrame extends JFrame {
 		 * BOTON RANDOM
 		 */
 
-		final JButton b_random = new JButton("RANDOM");
 		b_random.setEnabled(false);
 		b_random.setForeground(Color.WHITE);
 		b_random.setBackground(new Color(119, 50, 17));
 
 		b_random.addActionListener(new ActionListener() {
 
-			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO Auto-generated method stub
 
@@ -269,39 +268,36 @@ public class MainFrame extends JFrame {
 				// gestor.getCards();
 				for (int i = 0; i < cards.size(); i++) {
 
-					String text = cards.get(i).getName() + " - " + cards.get(i).getSummonCost() + " - "
-							+ cards.get(i).getAttack() + " - " + cards.get(i).getDefense() + " - "
-							+ cards.get(i).getValue();
+					Card card = new Card(0, cards.get(i).getName(), cards.get(i).getSummonCost(),
+							cards.get(i).getAttack(), cards.get(i).getDefense(), cards.get(i).getValue());
 
-					model.add(i, text);
+					model.add(i, card);
 
 				}
 
 				model2.removeAllElements();
 				value = 0;
-				name="Deck";
+				name = "Deck";
 				lblBaraja.setText(name + " - Total Value: " + value);
 				lblBaraja.setForeground(Color.WHITE);
 
 				while (value <= 20) {
 
 					int random = (int) (Math.random() * Col_list.getModel().getSize());
-					String selec = (String) Col_list.getModel().getElementAt(random);
-					String[] info = selec.split(" - ");
 
-					if (value + Integer.parseInt(info[info.length - 1]) <= 20) {
-						value = value + Integer.parseInt(info[info.length - 1]);
-						
+					Card cardSelec = Col_list.getModel().getElementAt(random);
+
+					if (value + cardSelec.getValue() <= 20) {
+						value = value + cardSelec.getValue();
+
 						lblBaraja.setText(name + " - Total Value: " + value);
-						model2.addElement((String) Col_list.getModel().getElementAt(random));
+						model2.addElement(Col_list.getModel().getElementAt(random));
 						model.remove(random);
-						deckCards.add(new Card(0, info[0], Integer.parseInt(info[1]), Integer.parseInt(info[2]),
-								Integer.parseInt(info[3]), Integer.parseInt(info[4])));
+
+						deckCards.add(cardSelec);
 					} else {
 						break;
-//						String aux = Col_list.getModel().getElementAt(random);
-//						String[] infoAux = selec.split(" - ");
-//						value = value + Integer.parseInt(infoAux[infoAux.length - 1]);
+
 					}
 				}
 			}
@@ -317,7 +313,6 @@ public class MainFrame extends JFrame {
 
 		b_load.addActionListener(new ActionListener() {
 
-			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO Auto-generated method stub
 
@@ -333,16 +328,13 @@ public class MainFrame extends JFrame {
 				// NOTA: para actualizar al momento poner linia abajo con esto: cards =
 				// gestor.getCards();
 				for (int i = 0; i < cards.size(); i++) {
+					
+					Card cardLoad = cards.get(i);
 
-					String text = cards.get(i).getName() + " - " + cards.get(i).getSummonCost() + " - "
-							+ cards.get(i).getAttack() + " - " + cards.get(i).getDefense() + " - "
-							+ cards.get(i).getValue();
 
-					collectionCards
-							.add(new Card(cards.get(i).getId(), cards.get(i).getName(), cards.get(i).getSummonCost(),
-									cards.get(i).getAttack(), cards.get(i).getDefense(), cards.get(i).getValue()));
+					collectionCards.add(cardLoad);
 
-					model.add(i, text);
+					model.add(i, cardLoad);
 
 				}
 
@@ -359,7 +351,6 @@ public class MainFrame extends JFrame {
 
 		b_save.addActionListener(new ActionListener() {
 
-			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO Auto-generated method stub
 
@@ -412,17 +403,13 @@ public class MainFrame extends JFrame {
 
 					} else {
 
-						
-						
 						Deck deck = new Deck(name, value, deckCards);
 
 						gestorMongo.updateDeck(deck);
 
-						JOptionPane.showMessageDialog(null,
-								"The Deck " + name + " has updated correctly.", "Info",
+						JOptionPane.showMessageDialog(null, "The Deck " + name + " has updated correctly.", "Info",
 								JOptionPane.INFORMATION_MESSAGE);
-						
-						
+
 					}
 
 				}
@@ -443,18 +430,16 @@ public class MainFrame extends JFrame {
 
 		b_search.addActionListener(new ActionListener() {
 
-			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				// TODO Auto-generated method stub
 
 				
-				b_random.setEnabled(false);
 				if (!search.getText().equals("")) {
 					boolean existDeck = gestorMongo.deckExist(search.getText());
 
 					if (existDeck) {
+
 						
-						//METODO PARA QUE CARGUE TODAS LAS CARTAS
 						cards = gestorExist.getCards();
 						b_random.setEnabled(true);
 						model.removeAllElements();
@@ -463,66 +448,55 @@ public class MainFrame extends JFrame {
 						name = "Deck";
 						lblBaraja.setText(name + " - Total Value: " + value);
 						lblBaraja.setForeground(Color.WHITE);
-
-						// NOTA: para actualizar al momento poner linia abajo con esto: cards =
-						// gestor.getCards();
+						
 						for (int i = 0; i < cards.size(); i++) {
+							
+							Card cardLoad = cards.get(i);
 
-							String text = cards.get(i).getName() + " - " + cards.get(i).getSummonCost() + " - "
-									+ cards.get(i).getAttack() + " - " + cards.get(i).getDefense() + " - "
-									+ cards.get(i).getValue();
 
-							collectionCards
-									.add(new Card(cards.get(i).getId(), cards.get(i).getName(), cards.get(i).getSummonCost(),
-											cards.get(i).getAttack(), cards.get(i).getDefense(), cards.get(i).getValue()));
+							collectionCards.add(cardLoad);
 
-							model.add(i, text);
+							model.add(i, cardLoad);
 
 						}
 						//METODO PARA QUE CARGUE TODAS LAS CARTAS ^^
 						
-						
 						Deck deckSearch = gestorMongo.getDeck(search.getText());
+						
 
 						ArrayList<Card> cardsDeck = deckSearch.getDeckCards();
 						vAux = 0;
-						
+
 						for (int i = 0; i < cardsDeck.size(); i++) {
-							
+
 							vAux = vAux + cardsDeck.get(i).getValue();
-							
-						}
 
+						}
 
 						for (int i = 0; i < cardsDeck.size(); i++) {
 
-							String text = cardsDeck.get(i).getName() + " - " + cardsDeck.get(i).getSummonCost() + " - "
-									+ cardsDeck.get(i).getAttack() + " - " + cardsDeck.get(i).getDefense() + " - "
-									+ cardsDeck.get(i).getValue();
+							Card cardDeck = cardsDeck.get(i);
 
-							
-							model2.add(i, text);
+							model2.add(i, cardDeck);
 						}
-						
-						//Esto es para eliminar las cartas de la lista Collection que ya estan en la lista Deck
+
+						// Esto es para eliminar las cartas de la lista Collection que ya estan en la
+						// lista Deck
 						for (int i = 0; i < model.size(); i++) {
-							
+
 							for (int j = 0; j < model2.size(); j++) {
-								
-								
-								if(model.get(i).equals(model2.get(j))) {
+
+								if (model.get(i).equals(model2.get(j))) {
 //									System.out.println(model.get(i)+" = "+model2.get(j));
 									model.removeElementAt(i);
 								}
 							}
 						}
-						
-						
-						
-						value= vAux;
+
+						value = vAux;
 						name = deckSearch.getDeckName();
 						lblBaraja.setText(name + " - Total Value: " + value);
-						
+
 					} else {
 
 						JOptionPane.showMessageDialog(null, "The Deck you are trying to search is not in the database.",
@@ -598,11 +572,34 @@ public class MainFrame extends JFrame {
 
 		contentPane.setLayout(gl_contentPane);
 	}
-	
+
 	public void loadAllCards() {
-		
-		
-		
+
+//		// METODO PARA QUE CARGUE TODAS LAS CARTAS
+//		cards = gestorExist.getCards();
+//		b_random.setEnabled(true);
+//		model.removeAllElements();
+//		model2.removeAllElements();
+//		value = 0;
+//		name = "Deck";
+//		lblBaraja.setText(name + " - Total Value: " + value);
+//		lblBaraja.setForeground(Color.WHITE);
+//
+//		// NOTA: para actualizar al momento poner linia abajo con esto: cards =
+//		// gestor.getCards();
+//		for (int i = 0; i < cards.size(); i++) {
+//
+//			String text = cards.get(i).getName() + " - " + cards.get(i).getSummonCost() + " - "
+//					+ cards.get(i).getAttack() + " - " + cards.get(i).getDefense() + " - " + cards.get(i).getValue();
+//
+//			collectionCards.add(new Card(cards.get(i).getId(), cards.get(i).getName(), cards.get(i).getSummonCost(),
+//					cards.get(i).getAttack(), cards.get(i).getDefense(), cards.get(i).getValue()));
+//
+//			model.add(i, text);
+//
+//		}
+//		// METODO PARA QUE CARGUE TODAS LAS CARTAS EN LA LISTA DE COLLECTION^^
+
 	}
 
 	public class TransparentListCellRenderer extends DefaultListCellRenderer {
